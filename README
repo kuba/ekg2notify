@@ -1,0 +1,20 @@
+Requirements:
+    * ekg2 compiled with python support
+    * cryptcat (on both machines)
+    * libnotify
+
+How to:
+    remote:~$ mkfifo notify
+    ekg2 (remote): /set notify:sessions "<session-name> [<another-session>...]"
+                   /set notify:highlights "<highlighted-word> [<another-word>...]"
+    remote$ ./server.sh
+
+    local$./client.sh
+
+    ekg2 (remote): /notify-test Muhahahah :)
+
+Remeber to change the default settings in server.sh and client.sh.
+
+Report bugs at http://github.com/kuba/ekg2notify/issues :)
+
+Have fun!
