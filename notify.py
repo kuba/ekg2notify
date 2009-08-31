@@ -103,6 +103,7 @@ class Notify(object):
         text = re.sub('&', '&amp;', text)
         text = re.sub('<', '&lt;', text)
         text = re.sub('>', '&gt;', text)
+        text = re.sub('\n', ' ', text)
         return text
 
     def message_handler(self, session_name, uid, type, text, sent_time, ignore_level):
