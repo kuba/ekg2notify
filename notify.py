@@ -127,10 +127,15 @@ class Notify(object):
                     sender = user.nickname
                 message = text
             else:
-                # MUC
-                # We want only "highlighted" messages when in MUC
+                # MUC-like message
+                # We want only highlighted messages
                 if not re.search('|'.join(self.get_highlights()), text):
-                    return
+                    # Fix IRC
+                    if session_name.startswith('irc:'):
+                        if "#" in uid:
+                            return
+                    else:
+                        return
 
             self.send(sender, self.filter_entities(message))
         
