@@ -16,43 +16,44 @@ home_dir = os.getenv('HOME')
 fifo_dir = '%s/notify' % home_dir
 ekg.variable_add('notify:fifo', fifo_dir)
 
-# Display name
-#display = ':0'
-# ekg.variable_add('notify:display', display)
-
 # Sessions that should be tracked, separated by whitespace
 ekg.variable_add('notify:sessions', '')
 
 # Words that should be treaded as highlighted
-# during MUCs, whitespace-separated
+# during MUCs (Multi User Chats), whitespace-separated.
+# Only highlighted messages will be sent as notification.
 ekg.variable_add('notify:highlights', '')
 
 class Notify(object):
     """
     Handles sending notifications.
 
-    :ivar ekgconfig: Ekg's config
-
-    :ivar sessions: Session that should be tracked.
-    :type sessions: :class:`dict` of session objects
+    :ivar ekgconfig: ekg2's config (ekg.config)
+    :type ekgconfig: :class:`dict`
 
     """
     def __init__(self, config):
+        """
+        Initialize the notification system.
+
+        Opens a FIFO (named pipe) and registers handlers.
+
+        :param config: ekg2's config (ekg.config)
+        :type config: :class:`dict`
+
+        """
         self.ekgconfig = config
 
         fifo = self.ekgconfig['notify:fifo']
         ekg.echo("Opening pipe at %s!" % fifo)
         self.pipe = open(fifo, 'w+')
 
-        #display = self.ekgconfig['notify:display']
-        #self._send('export DISPLAY=%s' % (display, ))
-
         ekg.handler_bind('protocol-message-received', self.message_handler)
-        ekg.command_bind('notify-test', self.test)
+        ekg.command_bind('notify-test', self.test_handler)
 
     def get_highlights(self):
         """
-        Retireve MUC-watched words
+        Retireve watched highlights from config.
 
         """
         raw = self.ekgconfig['notify:highlights']
@@ -87,17 +88,17 @@ class Notify(object):
         """
         Sends a notification.
 
+        Notification is sent in format: nickname\tmsg
+
+        :param nickname: Nickname of the sender
+        :type nickname: :class:`str`
+
+        :param msg: Message sent by the sender
+        :type msg: :class:`str`
+
         """
-        #msg = re.sub('"', '\\"', msg)
         msg = '%s\t%s' % (nickname, msg)
         self._send(msg)
-
-    def test(self, name, args):
-        """
-        Send test notification.
-
-        """
-        self.send("Test notify!", args)
 
     def filter_entities(self, text):
         text = re.sub('&', '&amp;', text)
@@ -106,20 +107,31 @@ class Notify(object):
         text = re.sub('\n', ' ', text)
         return text
 
+    def test_handler(self, name, args):
+        """
+        Send test notification.
+
+        """
+        self.send("Test notify!", self.filter_entities(args))
+
     def message_handler(self, session_name, uid, type, text, sent_time, ignore_level):
         """
-        Send message notify from sessions watchlist.
+        Send message notification if from watched session.
 
         """
         sessions = self.get_sessions()
+
+        # Is the session watched?
         if sessions.has_key(session_name):
             session = sessions[session_name]
 
+            # Clear all special ANSI control characters (like colors) from message
             text = re.sub(r'(\x1b\[.*?m)|\xc2\xa0', '', text)
+
             try:
                 sender, message = re.search(r'[<\(](.*?)[>\)]\s*(.*)\s*$', text).groups()
             except AttributeError:
-                # p2p
+                # Private message
                 try:
                     user = session.user_get(uid)
                 except KeyError:
