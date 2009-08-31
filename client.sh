@@ -1,23 +1,26 @@
 #!/bin/bash
 
-usage="USAGE:\n\t`basename $0` ssh <standard arguments apply>\n\t`basename $0` cryptcat <host> <port> <password>"
+CRYPTCAT_PASSWORD='test'
+CRYPTCAT_HOST='s'
+CRYPTCAT_PORT=1234
 
-if [[ $1 == 'ssh' ]]
-then
-    # Using SSH
-    command="$* -t cat notify | sed -u -e 's/\\r//'"
-elif [[ $1 == 'cryptcat' && $# == 4 ]]
-then
-    # Using cryptcat
-    command="cryptcat -k $4 $2 $3"
-else
-    echo -e $usage
-    exit
-fi
+usage="USAGE:\n\t`basename $0` ssh <standard arguments apply>\n\t`basename $0` cryptcat"
 
-eval $command | sed -u -n -e "s/\r//" -e "s/'/'\\\\''/g" -e "s/^\(.*\)\t\(.*\)$/notify-send '\1' '\2' -i notification-message-im/p" | bash
+process_pipe() {
+    tee /dev/stderr | while IFS=$'\t\r' read -a args; do notify-send "${args[@]}"; done
+}
 
-if [[ $? -eq 0 && $1 == 'cryptcat' ]]
-then
-    echo "Is cryptcat-server.sh running?"
-fi
+case $1 in
+    ssh)
+    "$@" -t cat notify | process_pipe;
+    ;;
+    cryptcat)
+    if cryptcat -k $CRYPTCAT_PASSWORD $CRYPTCAT_HOST $CRYPTCAT_PORT | process_pipe;
+    then
+        echo "Is cryptcat-server.sh running?";
+    fi
+    ;;
+    *)
+    echo -e $usage;
+    ;;
+esac

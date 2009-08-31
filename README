@@ -7,15 +7,17 @@ Optionally:
 
 How to:
     remote:~$ mkfifo notify
-    ekg2 (remote): /set notify:sessions "<session-name> [<another-session>...]"
+    ekg2 (remote): /python:load notify
+                   /set notify:sessions "<session-name> [<another-session>...]"
                    /set notify:highlights "<highlighted-word> [<another-word>...]"
 
     # Without cryptcat
     local$ ./client.sh ssh <host> <port>
 
     # With cryptcat
-    remote$ ./cryptcat-server.sh <port> <password>
-    local$ ./client cryptcat <host> <port> <password>
+    remote$ ./cryptcat-server.sh
+    local$ ./client cryptcat
+    # Remember to change deafult connection params inside the scripts
 
     # To test it
     ekg2 (remote): /notify-test Muhahah! It works :)
