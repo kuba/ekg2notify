@@ -7,7 +7,7 @@ CRYPTCAT_PORT=1234
 usage="USAGE:\n\t`basename $0` ssh <standard arguments apply>\n\t`basename $0` cryptcat"
 
 process_pipe() {
-    tee /dev/stderr | while IFS=$'\t\r' read -a args; do notify-send "${args[@]}"; done
+    tee /dev/stderr | while IFS=$'\t\r' read -a args; do notify-send -i notification-message-im "${args[@]}"; done
 }
 
 case $1 in
